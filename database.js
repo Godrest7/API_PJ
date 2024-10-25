@@ -1,11 +1,14 @@
-const sqlite3 = require("sqlite3").verbose()
+const sqlite3 = require("sqlite3").verbose();
 
 // Ouvrir la connexion à la base de données
 const db = new sqlite3.Database("./users.db", (err) => {
     if (err) {
-        console.error("Erreur lors de l'ouverture de la base de données :", err.message)
+        console.error("Erreur lors de l'ouverture de la base de données :", err.message);
     } else {
-        console.log("Connecté à la base de données SQLite.")
+        console.log("Connecté à la base de données SQLite.");
+
+        // Activer les clés étrangères pour les relations
+        db.run("PRAGMA foreign_keys = ON");
 
         // Créer la table des utilisateurs si elle n'existe pas
         db.run(
@@ -16,11 +19,11 @@ const db = new sqlite3.Database("./users.db", (err) => {
             )`,
             (err) => {
                 if (err) {
-                    console.error("Erreur lors de la création de la table :", err.message)
+                    console.error("Erreur lors de la création de la table :", err.message);
                 }
             }
-        )
+        );
     }
-})
+});
 
-module.exports = db
+module.exports = db;
