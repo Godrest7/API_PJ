@@ -3,6 +3,9 @@ const app = express();
 const port = 3000;
 const usersRouter = require("./routes/users.js");
 
+// Importation de la base de données depuis "database.js"
+const db = require("./database.js");
+
 // MIDDLEWARE
 app.use(express.json());
 
@@ -21,29 +24,31 @@ app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
 });
 
-const sqlite3 = require("sqlite3").verbose()
+// Si vous devez créer une nouvelle connexion SQLite ici, renommez la variable
+const sqlite3 = require("sqlite3").verbose();
 
-// Open the database connection
-const db = new sqlite3.Database("./users.db", (err) => {
-	if (err) {
-		console.error("Error opening database:", err.message)
-	} else {
-		console.log("Connected to the SQLite database.")
+// Ouvrir la connexion à la base de données en évitant la redéclaration de 'db'
+const localDb = new sqlite3.Database("./users.db", (err) => {
+    if (err) {
+        console.error("Error opening database:", err.message);
+    } else {
+        console.log("Connected to the SQLite database.");
 
-		// Create the items table if it doesn't exist
-		db.run(
-			`CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        firstName TEXT NOT NULL,
-        lastName TEXT NOT NULL
-      )`,
-			(err) => {
-				if (err) {
-					console.error("Error creating table:", err.message)
-				}
-			}
-		)
-	}
-})
+        // Créer la table users si elle n'existe pas déjà
+        localDb.run(
+            `CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            firstName TEXT NOT NULL,
+            lastName TEXT NOT NULL
+          )`,
+            (err) => {
+                if (err) {
+                    console.error("Error creating table:", err.message);
+                }
+            }
+        );
+    }
+});
 
-module.exports = db
+// Exporter la base de données locale pour l'utiliser dans d'autres modules si nécessaire
+module.exports = localDb;

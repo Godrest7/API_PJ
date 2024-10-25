@@ -1,90 +1,49 @@
 const express = require("express");
 const router = express.Router();
 
-const usersArray = [
-    // Tableau temporaire d'utilisateurs avec quelques données pour les tests
-    { id: 1, firstName: "John", lastName: "Doe", role: "admin" },
-	{ id: 2, firstName: "Jane", lastName: "Smith", role: "user" },
-	{ id: 3, firstName: "Alice", lastName: "Johnson", role: "moderator" },
-	{ id: 4, firstName: "Bob", lastName: "Brown", role: "user" },
-	{ id: 5, firstName: "Charlie", lastName: "Davis", role: "admin" },
-];
+const db = require("../database")
 
-// GET METHOD
+// GET METHOD: LIRE tous les utilisateurs
 router.get("/users", (req, res) => {
-    res.json(usersArray);
+    db.all('SELECT * FROM users', [], (err, rows) => {
+        if (err) {
+          res.status(500).json({ error: err.message });
+        } else {
+          res.json(rows);
+        }
+      });
 });
 
-module.exports = router;
+// POST METHOD: CRÉER un nouvel utilisateur
+router.post("/", (req, res) => {
+    // récupérer toutes les données qui arrivent dans le corps de la requête (body)
+    const { firstName, lastName } = req.body;
 
-// GET : LIRE tous les utilisateurs
-app.get("/", (req, res) => {
-	res.json(users)
-})
+    // récupérer l'ID du dernier utilisateur en fonction du nombre d'utilisateurs dans notre variable de tableau 'usersArray'
+    const lastId = usersArray[usersArray.length - 1].id;
+    // ajouter un pour créer un utilisateur unique
+    const newId = lastId + 1;
 
+    // créer le nouvel utilisateur avec les données du corps de la requête et l'ID calculé
+    const newUser = {
+        firstName,
+        lastName,
+        id: newId,
+    };
 
-/*
-app.post("/", (req, res) => {
-    console.log(req.body);
-    
-	res.json({
-        "firstName": "user one",
-        "lastName": "last name test",
-        "role": "admin test"
-    })
-    
-})
-*/
-//const { firstName, lastName, role } = req.body
+    // ajouter le nouvel utilisateur à notre liste d'utilisateurs en utilisant la méthode 'push'
+    usersArray.push(newUser);
+    // envoyer le code de statut 201 (créé) et les données du nouvel utilisateur afin de confirmer au client
+    res.status(201).json(newUser);
+});
 
-/*
-// créer un nouvel utilisateur
-app.post("/", (req, res) => {
-	const { firstName, lastName, role } = req.body
-
-	const newUser = {
-		firstName,
-		lastName,
-		role,
-	}
-
-	res.json(newUser)
-})
-*/
-
-/*
-// POST : CRÉER un nouvel utilisateur, basé sur les données passées dans le corps(body) de la requête
-app.post("/", (req, res) => {
-	// récupérer toutes les données qui arrivent dans le corps de la requête (body)
-	const { firstName, lastName } = req.body
-
-	// récupérer l'ID du dernier utilisateur en fonction du nombre d'utilisateurs dans notre variable de tableau 'users'.
-	const lastId = users[users.length - 1].id
-	// ajouter un pour créer un utilisateur unique
-	const newId = lastId + 1
-
-	// créer le nouvel utilisateur avec les données du corps de la requête et l'ID calculé
-	const newUser = {
-		firstName,
-		lastName,
-		id: newId,
-	}
-
-	// ajouter le nouvel utilisateur à notre liste d'utilisateurs en utilisant la méthode 'push'
-	users.push(newUser)
-	// envoyer le code de statut 201 (créé) et les données du nouvel utilisateur afin de confirmer au client.
-	res.status(201).json(newUser)
-})
-
-*/
-
-// PUT : Mettre à jour un utilisateur basé sur les données envoyées dans le corps (body) de la requête et l'ID utilisateur passé dans l'URL
-app.put("/:id", (req, res) => {
+// PUT METHOD: Mettre à jour un utilisateur
+router.put("/:id", (req, res) => {
     // Récupérer l'ID de l'utilisateur depuis l'URL et le convertir en entier
     const id = parseInt(req.params.id);
 
-    // Trouver l'utilisateur correspondant à cet ID dans la liste 'users'
-    const userIndex = users.findIndex((user) => user.id === id);
+    // Trouver l'utilisateur correspondant à cet ID dans la liste 'usersArray'
+    const userIndex = usersArray.findIndex((user) => user.id === id);
 
     // Si l'utilisateur n'est pas trouvé, renvoyer une erreur 404
     if (userIndex < 0) {
@@ -95,31 +54,31 @@ app.put("/:id", (req, res) => {
     const { firstName, lastName } = req.body;
 
     // Mettre à jour les valeurs si elles sont envoyées dans le body
-    if (firstName) users[userIndex].firstName = firstName;
-    if (lastName) users[userIndex].lastName = lastName;
+    if (firstName) usersArray[userIndex].firstName = firstName;
+    if (lastName) usersArray[userIndex].lastName = lastName;
 
     // Envoyer une réponse avec les nouvelles informations de l'utilisateur mis à jour
     res.json({
         msg: "Utilisateur mis à jour",
-        user: users[userIndex],
+        user: usersArray[userIndex],
     });
 });
 
-// DELETE : Supprimer un utilisateur basé sur l'ID passé dans l'URL
-app.delete("/:id", (req, res) => {
+// DELETE METHOD: Supprimer un utilisateur
+router.delete("/:id", (req, res) => {
     // Récupérer l'ID de l'utilisateur à partir des paramètres de l'URL
     const id = parseInt(req.params.id);
 
     // Trouver l'index de l'utilisateur correspondant à cet ID
-    const userIndex = users.findIndex((user) => user.id === id);
+    const userIndex = usersArray.findIndex((user) => user.id === id);
 
     // Si l'utilisateur n'est pas trouvé, renvoyer une erreur 404
     if (userIndex < 0) {
         return res.status(404).json({ msg: "Utilisateur non trouvé" });
     }
 
-    // Supprimer l'utilisateur trouvé du tableau 'users' en utilisant 'splice'
-    users.splice(userIndex, 1);
+    // Supprimer l'utilisateur trouvé du tableau 'usersArray' en utilisant 'splice'
+    usersArray.splice(userIndex, 1);
 
     // Envoyer une réponse confirmant la suppression de l'utilisateur
     res.json({
@@ -127,13 +86,13 @@ app.delete("/:id", (req, res) => {
     });
 });
 
-// GET : Récupérer un utilisateur basé sur l'ID passé dans l'URL
-app.get("/:id", (req, res) => {
+// GET METHOD: Récupérer un utilisateur par ID
+router.get("/:id", (req, res) => {
     // Récupérer l'ID de l'utilisateur depuis les paramètres de l'URL
     const id = parseInt(req.params.id);
 
     // Trouver l'index de l'utilisateur correspondant à cet ID
-    const userIndex = users.findIndex((user) => user.id === id);
+    const userIndex = usersArray.findIndex((user) => user.id === id);
 
     // Si l'utilisateur n'est pas trouvé, renvoyer une erreur 404
     if (userIndex < 0) {
@@ -141,5 +100,7 @@ app.get("/:id", (req, res) => {
     }
 
     // Si l'utilisateur est trouvé, renvoyer les informations de cet utilisateur
-    res.json(users[userIndex]);
+    res.json(usersArray[userIndex]);
 });
+
+module.exports = router;
